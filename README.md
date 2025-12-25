@@ -56,5 +56,7 @@ Save the file
 Commit and push it to GitHub:
 
   git add README.md
+  
   git commit -m "Add README documentation"
+  
   git push origin main
