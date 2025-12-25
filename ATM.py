@@ -3,262 +3,416 @@ from tkinter import messagebox
 
 current_balance = 1000
 
+class ATM(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        
+        self.title("ATM")
+        self.geometry("800x600")
+        self.configure(bg='#1a1a2e')
+      
+        self.title_font = ("Arial", 28, "bold")
+        self.heading_font = ("Arial", 20, "bold")
+        self.normal_font = ("Arial", 12)
+        self.button_font = ("Arial", 11, "bold")
 
-class SampleApp(tk.Tk):
-
-    def __init__(self, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
-
-        self.shared_data = {'Balanci': tk.IntVar()}
-
-        container = tk.Frame(self)
+        self.colors = {
+            'primary': '#16213e',
+            'secondary': '#0f3460',
+            'accent': '#e94560',
+            'light': '#f1f1f1',
+            'dark': '#1a1a2e',
+            'success': '#4CAF50',
+            'warning': '#FF9800',
+            'card': '#667eea',
+            'text_light': '#dddddd',
+            'text_dark': '#333333'
+        }
+        
+        # Container
+        container = tk.Frame(self, bg=self.colors['dark'])
         container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
-
+        
         self.frames = {}
-        for F in (F_fillestare, Menu, F_terheqjeve, F_depozitave, F_bilancit):
+        
+        frames_list = [StartPage, MainMenu, WithdrawPage, DepositPage, BalancePage]
+        for F in frames_list:
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
-
-        self.show_frame("F_fillestare")
-
+        
+        self.show_frame("StartPage")
+    
     def show_frame(self, page_name):
         frame = self.frames[page_name]
         frame.tkraise()
 
-
-class F_fillestare(tk.Frame):
-
+class StartPage(tk.Frame):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg='#83838B')
+        super().__init__(parent, bg=controller.colors['dark'])
         self.controller = controller
-        self.controller.title('ATM')
-        self.controller.state('zoomed')
+        
+        # Header
+        header = tk.Frame(self, bg=controller.colors['primary'], height=150)
+        header.pack(fill='x')
+        header.pack_propagate(False)
+        
+        title = tk.Label(header, text="ATM", font=controller.title_font, 
+                        bg=controller.colors['primary'], fg='white')
+        title.pack(expand=True)
+        
+        subtitle = tk.Label(header, text="Secure Banking", font=controller.normal_font,
+                          bg=controller.colors['primary'], fg=controller.colors['light'])
+        subtitle.pack(pady=(0, 20))
+        
+        # Login Container
+        login_frame = tk.Frame(self, bg=controller.colors['dark'])
+        login_frame.pack(expand=True, fill='both', padx=50, pady=30)
+        
+        # Card simulation
+        card_frame = tk.Frame(login_frame, bg='#2d3047', highlightthickness=2,
+                             highlightbackground='#3d405b', relief='flat')
+        card_frame.pack(pady=(0, 40), ipadx=20, ipady=20)
+        
+        tk.Label(card_frame, text="💳", font=("Arial", 24), bg='#2d3047', fg='white').pack(pady=(10, 5))
+        tk.Label(card_frame, text="Enter Your PIN", font=controller.normal_font,
+                bg='#2d3047', fg=controller.colors['light']).pack()
+        
+        # PIN Entry
+        pin_frame = tk.Frame(self, bg=controller.colors['dark'])
+        pin_frame.pack(pady=20)
+        
+        tk.Label(pin_frame, text="PIN Code:", font=controller.normal_font,
+                bg=controller.colors['dark'], fg='white').pack(anchor='w')
+        
+        self.pin_var = tk.StringVar()
+        pin_entry = tk.Entry(pin_frame, textvariable=self.pin_var, font=("Arial", 18),
+                           show="•", width=20, bg='#2d3047', fg='white',
+                           insertbackground='white', justify='center')
+        pin_entry.pack(pady=10, ipady=10)
+        pin_entry.focus_set()
+        
+        # Error label
+        self.error_label = tk.Label(login_frame, text="", font=controller.normal_font,
+                                   bg=controller.colors['dark'], fg=controller.colors['accent'])
+        self.error_label.pack()
+        
+        # Login Button
+        login_btn = tk.Button(login_frame, text="🔓 ACCESS ACCOUNT", 
+                            font=controller.button_font,
+                            bg=controller.colors['accent'], fg='white',
+                            activebackground='#ff6b88', activeforeground='white',
+                            padx=30, pady=12,
+                            command=lambda: self.check_pin(controller))
+        login_btn.pack(pady=20)
+        
+        # Footer
+        footer = tk.Frame(self, bg=controller.colors['primary'], height=60)
+        footer.pack(fill='x', side='bottom')
+        footer.pack_propagate(False)
+        
+        tk.Label(footer, text="24/7 Banking Services • 100% Secure", 
+                font=("Arial", 10), bg=controller.colors['primary'], fg='#aaaaaa').pack(expand=True)
+    
+    def check_pin(self, controller):
+        pin = self.pin_var.get()
+        if len(pin) == 4 and pin.isdigit() and 1000 <= int(pin) <= 9999:
+            self.pin_var.set("")
+            self.error_label.config(text="")
+            controller.show_frame("MainMenu")
+        else:
+            self.error_label.config(text="⚠ Invalid PIN! Please enter a 4-digit number.")
 
-        heading_label = tk.Label(self, text='ATM', font=('orbitron', 45, 'bold'), background='#83838B')
-        heading_label.pack(pady=25)
-
-        space_label = tk.Label(self, height=4, bg='#83838B')
-        space_label.pack()
-
-        password_label = tk.Label(self, text='Ju lutem, shtypni PIN-in tuaj:', font=('orbitron', 13), bg='#83838B')
-        password_label.pack(pady=10)
-
-        my_password = tk.StringVar()
-        password_entry_box = tk.Entry(self, textvariable=my_password, font=('orbitron', 12), width=22)
-        password_entry_box.focus_set()
-        password_entry_box.pack(ipady=7)
-
-        def handle_focus_in(_):
-            password_entry_box.configure(font=('orbitron', 12), show='*')
-
-        password_entry_box.bind('<FocusIn>', handle_focus_in)
-
-        def check_password():
-            if int(my_password.get()) >= 1000 and int(my_password.get())<=9999:
-                my_password.set('')
-                incorrect_password_label['text'] = ''
-                controller.show_frame('Menu')
-            else:
-               incorrect_password_label['text'] = 'Pin-i juaj eshte shenuar gabim! Ju lutem shenoni perseri!'
-               
-        enter_button = tk.Button(self, text='Enter', command=check_password, relief='groove', borderwidth=3, width=40,height=3)
-        enter_button.pack(pady=10)
-
-        incorrect_password_label = tk.Label(self, text='', font=('orbitron', 13), bg='#3d3d5c', anchor='n')
-        incorrect_password_label.pack(fill='both', expand=True)
-
-        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
-        bottom_frame.pack(fill='x', side='bottom')
-
-class Menu(tk.Frame):
-
+class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg='#83838B')
+        super().__init__(parent, bg=controller.colors['dark'])
         self.controller = controller
+        
+        # Header
+        header = tk.Frame(self, bg=controller.colors['primary'], height=120)
+        header.pack(fill='x')
+        header.pack_propagate(False)
+        
+        welcome_label = tk.Label(header, text="Welcome Back!", font=controller.heading_font,
+                                bg=controller.colors['primary'], fg='white')
+        welcome_label.pack(expand=True, pady=20)
+        
+        # Services Grid
+        services_frame = tk.Frame(self, bg=controller.colors['dark'])
+        services_frame.pack(expand=True, fill='both', padx=30, pady=30)
+        
+        # Buttons Grid
+        buttons = [
+            ("💰 WITHDRAW", controller.colors['secondary'], lambda: controller.show_frame("WithdrawPage"), "💵"),
+            ("💳 DEPOSIT", controller.colors['success'], lambda: controller.show_frame("DepositPage"), "📥"),
+            ("📊 BALANCE", controller.colors['warning'], lambda: controller.show_frame("BalancePage"), "📈"),
+            ("🚪 LOGOUT", controller.colors['accent'], lambda: controller.show_frame("StartPage"), "🔒")
+        ]
+        
+        for i, (text, color, command, icon) in enumerate(buttons):
+            btn_frame = tk.Frame(services_frame, bg=controller.colors['dark'])
+            btn_frame.grid(row=i//2, column=i%2, padx=10, pady=10, sticky='nsew')
+            
+            services_frame.grid_columnconfigure(i%2, weight=1)
+            services_frame.grid_rowconfigure(i//2, weight=1)
+            
+            btn = tk.Button(btn_frame, text=f"{icon}\n{text}", 
+                          font=controller.button_font,
+                          bg=color, fg='white',
+                          activebackground=color,
+                          padx=20, pady=30,
+                          command=command, wraplength=150)
+            btn.pack(fill='both', expand=True)
+        
+        # Footer
+        footer = tk.Frame(self, bg='#2d3047', height=50)
+        footer.pack(fill='x', side='bottom')
+        tk.Label(footer, text=f"Current Balance: €{current_balance:.2f}", 
+                font=("Arial", 10, 'bold'), bg='#2d3047', fg='white').pack(expand=True)
 
-        heading_label = tk.Label(self, text='ATM', font=('orbitron', 45, 'bold'), background='#83838B')
-        heading_label.pack(pady=25)
-
-        main_menu_label = tk.Label(self, text='Menu', font=('orbitron', 13), bg='#83838B')
-        main_menu_label.pack()
-
-        selection_label = tk.Label(self, text='Ju lutem zgjedhni sherbimin e kerkuar:', font=('orbitron', 13),
-                                   bg='#83838B', anchor='w')
-        selection_label.pack(fill='x')
-
-        button_frame = tk.Frame(self, bg='#3d3d5c')
-        button_frame.pack(fill='both', expand=True)
-
-        def terheqje():
-            controller.show_frame('F_terheqjeve')
-
-        withdraw_button = tk.Button(button_frame, text='Terheqje parash', command=terheqje, relief='raised',
-                                    borderwidth=3, width=50, height=5)
-        withdraw_button.grid(row=0, column=0, pady=5)
-
-        def depozita():
-            controller.show_frame('F_depozitave')
-
-        deposit_button = tk.Button(button_frame, text='Deponim parash', command=depozita, relief='raised',
-                                   borderwidth=3, width=50, height=5)
-        deposit_button.grid(row=1, column=0, pady=5)
-
-        def bilanci():
-            controller.show_frame('F_bilancit')
-
-        balance_button = tk.Button(button_frame, text='Gjendja e llogarise', command=bilanci, relief='raised',
-                                   borderwidth=3, width=50, height=5)
-        balance_button.grid(row=2, column=0, pady=5)
-
-        def exit():
-            controller.show_frame('F_fillestare')
-
-        exit_button = tk.Button(button_frame, text='Exit', command=exit, relief='raised', borderwidth=3, width=50,
-                                height=5)
-        exit_button.grid(row=3, column=0, pady=5)
-
-        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
-        bottom_frame.pack(fill='x', side='bottom')
-
-
-class F_terheqjeve(tk.Frame):
-
+class WithdrawPage(tk.Frame):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg='#3d3d5c')
+        super().__init__(parent, bg=controller.colors['dark'])
         self.controller = controller
-
-        heading_label = tk.Label(self, text='ATM', font=('orbitron', 45, 'bold'), background='#3d3d5c')
-        heading_label.pack(pady=25)
-
-        choose_amount_label = tk.Label(self, text='Qfare shume deshironi te terhiqni?', font=('orbitron', 13),
-                                       bg='#3d3d5c')
-        choose_amount_label.pack()
-
-        button_frame = tk.Frame(self, bg='#83838B')
-        button_frame.pack(fill='both', expand=True)
-
-        def terheqje(amount):
-
-            global current_balance
-
-            if amount > current_balance:
-                messagebox.showwarning('Paralajmrim!', 'Fonde jo të mjaftueshme!')
-            else:
-                current_balance -= amount
-                controller.shared_data['Balanci'].set(current_balance)
-                controller.show_frame('Menu')
-
-        njezet_button = tk.Button(button_frame, text='10 euro', command=lambda: terheqje(10), relief='raised',borderwidth=3, width=50, height=5)
-        njezet_button.grid(row=0, column=0, pady=5)
-
-        dyzete_button = tk.Button(button_frame, text='20 euro', command=lambda: terheqje(20), relief='raised',borderwidth=3, width=50, height=5)
-        dyzete_button.grid(row=1, column=0, pady=5)
-
-        gjashtedhjete_button = tk.Button(button_frame, text='50 euro', command=lambda: terheqje(50), relief='raised', borderwidth=3, width=50, height=5)
-        gjashtedhjete_button.grid(row=2, column=0, pady=5)
-
-        njeqindshe_button = tk.Button(button_frame, text='100 euro', command=lambda: terheqje(100), relief='raised', borderwidth=3, width=50, height=5)
-        njeqindshe_button.grid(row=0, column=1, pady=5, padx=555)
-
-        dyqindshe_button = tk.Button(button_frame, text='200 euro', command=lambda: terheqje(200), relief='raised',borderwidth=3, width=50, height=5)
-        dyqindshe_button.grid(row=1, column=1, pady=5)
-
-        cash = tk.StringVar()
-        other_amount_entry = tk.Entry(button_frame, textvariable=cash, width=59, justify='right')
-        other_amount_entry.grid(row=2, column=1, pady=5, ipady=30)
-
-        def other_amount(_):
-            global current_balance
-
-            if int(cash.get()) > current_balance:
-               messagebox.showwarning('Paralajmrim!', 'Fonde jo të mjaftueshme!')
-            else:
-               current_balance -= int(cash.get())
-               controller.shared_data['Balanci'].set(current_balance)
-               cash.set('')
-               controller.show_frame('Menu')
-
-        other_amount_entry.bind('<Return>', other_amount)
-
-        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
-        bottom_frame.pack(fill='x', side='bottom')
-
-class F_depozitave(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg='#3d3d5c')
-        self.controller = controller
-
-        heading_label = tk.Label(self, text='ATM', font=('orbitron', 45, 'bold'), background='#3d3d5c')
-        heading_label.pack(pady=25)
-
-        space_label = tk.Label(self, height=4, bg='#3d3d5c')
-        space_label.pack()
-
-        enter_amount_label = tk.Label(self, text='Shuma e deponuar', font=('orbitron', 13), bg='#3d3d5c')
-        enter_amount_label.pack(pady=10)
-
-        cash = tk.StringVar()
-        deposit_entry = tk.Entry(self, textvariable=cash, font=('orbitron', 12), width=22)
-        deposit_entry.pack(ipady=7)
-
-        def deposit_cash():
-            global current_balance
-            current_balance += int(cash.get())
-            controller.shared_data['Balanci'].set(current_balance)
-            controller.show_frame('Menu')
-            cash.set('')
-
-        enter_button = tk.Button(self, text='Enter', command=deposit_cash, relief='raised', borderwidth=3, width=40,
-                                 height=3)
-        enter_button.pack(pady=10)
-
-        two_tone_label = tk.Label(self, bg='#83838B')
-        two_tone_label.pack(fill='both', expand=True)
-
-        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
-        bottom_frame.pack(fill='x', side='bottom')
-
-
-class F_bilancit(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg='#33334d')
-        self.controller = controller
-
-        heading_label = tk.Label(self, text='ATM', font=('orbitron', 45, 'bold'), background='#33334d')
-        heading_label.pack(pady=25)
-
+        
+        # Header with back button
+        header = tk.Frame(self, bg=controller.colors['primary'], height=100)
+        header.pack(fill='x')
+        header.pack_propagate(False)
+        
+        back_btn = tk.Button(header, text="← Back", font=controller.button_font,
+                           bg=controller.colors['primary'], fg='white',
+                           activebackground=controller.colors['primary'],
+                           activeforeground='white',
+                           command=lambda: controller.show_frame("MainMenu"))
+        back_btn.pack(side='left', padx=20)
+        
+        tk.Label(header, text="Cash Withdrawal", font=controller.heading_font,
+                bg=controller.colors['primary'], fg='white').pack(expand=True)
+        
+        # Quick Amounts
+        quick_frame = tk.Frame(self, bg=controller.colors['dark'])
+        quick_frame.pack(pady=30)
+        
+        tk.Label(quick_frame, text="Quick Withdraw", font=controller.normal_font,
+                bg=controller.colors['dark'], fg='white').pack()
+        
+        amounts = [10, 20, 50, 100, 200, 500]
+        buttons_frame = tk.Frame(quick_frame, bg=controller.colors['dark'])
+        buttons_frame.pack(pady=20)
+        
+        for i, amount in enumerate(amounts):
+            btn = tk.Button(buttons_frame, text=f"€{amount}",
+                          font=controller.button_font,
+                          bg=controller.colors['secondary'], fg='white',
+                          activebackground='#2d4059',
+                          command=lambda a=amount: self.withdraw(a, controller),
+                          width=8, height=2)
+            btn.grid(row=i//3, column=i%3, padx=5, pady=5)
+        
+        # Custom Amount
+        custom_frame = tk.Frame(self, bg=controller.colors['dark'])
+        custom_frame.pack(pady=30, padx=50)
+        
+        tk.Label(custom_frame, text="Custom Amount:", font=controller.normal_font,
+                bg=controller.colors['dark'], fg='white').pack()
+        
+        self.custom_var = tk.StringVar()
+        custom_entry = tk.Entry(custom_frame, textvariable=self.custom_var,
+                              font=("Arial", 16), justify='center',
+                              bg='#2d3047', fg='white',
+                              insertbackground='white')
+        custom_entry.pack(pady=10, ipady=8, ipadx=20)
+        custom_entry.bind('<Return>', lambda e: self.withdraw_custom(controller))
+        
+        custom_btn = tk.Button(custom_frame, text="WITHDRAW CUSTOM AMOUNT",
+                             font=controller.button_font,
+                             bg=controller.colors['accent'], fg='white',
+                             command=lambda: self.withdraw_custom(controller),
+                             padx=20, pady=10)
+        custom_btn.pack(pady=10)
+        
+        # Balance indicator
+        balance_frame = tk.Frame(self, bg='#2d3047')
+        balance_frame.pack(fill='x', side='bottom', pady=10)
+        tk.Label(balance_frame, text=f"Available: €{current_balance:.2f}",
+                font=("Arial", 12, 'bold'), bg='#2d3047', fg='white').pack(pady=10)
+    
+    def withdraw(self, amount, controller):
         global current_balance
-        controller.shared_data['Balanci'].set(current_balance)
-        balance_label = tk.Label(self, textvariable=controller.shared_data['Balanci'], font=('orbitron', 13),
-                                 bg='#33334d', anchor='w')
-        balance_label.pack(fill='x')
-        button_frame = tk.Frame(self, bg='#83838B')
-        button_frame.pack(fill='both', expand=True)
+        if amount > current_balance:
+            messagebox.showwarning("Insufficient Funds",
+                                 f"Your balance is €{current_balance:.2f}")
+        else:
+            current_balance -= amount
+            messagebox.showinfo("Success",
+                              f"€{amount:.2f} withdrawn successfully!\nNew Balance: €{current_balance:.2f}")
+            controller.show_frame("MainMenu")
+    
+    def withdraw_custom(self, controller):
+        try:
+            amount = float(self.custom_var.get())
+            self.withdraw(amount, controller)
+            self.custom_var.set("")
+        except ValueError:
+            messagebox.showerror("Error", "Please enter a valid amount")
 
-        def menu():
-            controller.show_frame('Menu')
+class DepositPage(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent, bg=controller.colors['dark'])
+        self.controller = controller
+        
+        # Header
+        header = tk.Frame(self, bg=controller.colors['primary'], height=100)
+        header.pack(fill='x')
+        header.pack_propagate(False)
+        
+        back_btn = tk.Button(header, text="← Back", font=controller.button_font,
+                           bg=controller.colors['primary'], fg='white',
+                           activebackground=controller.colors['primary'],
+                           activeforeground='white',
+                           command=lambda: controller.show_frame("MainMenu"))
+        back_btn.pack(side='left', padx=20)
+        
+        tk.Label(header, text="Cash Deposit", font=controller.heading_font,
+                bg=controller.colors['primary'], fg='white').pack(expand=True)
+        
+        # Deposit interface
+        deposit_frame = tk.Frame(self, bg=controller.colors['dark'])
+        deposit_frame.pack(expand=True, padx=50, pady=50)
+        
+        # Deposit icon
+        icon_frame = tk.Frame(deposit_frame, bg='#2d3047', width=120, height=120)
+        icon_frame.pack_propagate(False)
+        icon_frame.pack(pady=(0, 30))
+        
+        tk.Label(icon_frame, text="📥", font=("Arial", 48), bg='#2d3047', fg='white').pack(expand=True)
+        
+        tk.Label(deposit_frame, text="Enter Deposit Amount:", font=controller.normal_font,
+                bg=controller.colors['dark'], fg='white').pack()
+        
+        self.amount_var = tk.StringVar()
+        amount_entry = tk.Entry(deposit_frame, textvariable=self.amount_var,
+                              font=("Arial", 18), justify='center',
+                              bg='#2d3047', fg='white',
+                              insertbackground='white', width=20)
+        amount_entry.pack(pady=20, ipady=10)
+        amount_entry.focus_set()
+        
+        # Buttons
+        btn_frame = tk.Frame(deposit_frame, bg=controller.colors['dark'])
+        btn_frame.pack(pady=20)
+        
+        tk.Button(btn_frame, text="DEPOSIT", font=controller.button_font,
+                 bg=controller.colors['success'], fg='white',
+                 command=self.deposit,
+                 padx=40, pady=25).pack(side='left', padx=20)
+        
+        tk.Button(btn_frame, text="CLEAR", font=controller.button_font,
+                 bg=controller.colors['warning'], fg='white',
+                 command=lambda: self.amount_var.set(""),
+                 padx=40, pady=25).pack(side='left', padx=20)
+    
+    def deposit(self):
+        global current_balance
+        try:
+            amount = float(self.amount_var.get())
+            if amount <= 0:
+                messagebox.showerror("Error", "Please enter a positive amount")
+                return
+            
+            current_balance += amount
+            messagebox.showinfo("Success",
+                              f"€{amount:.2f} deposited successfully!\nNew Balance: €{current_balance:.2f}")
+            self.amount_var.set("")
+            self.controller.show_frame("MainMenu")
+        except ValueError:
+            messagebox.showerror("Error", "Please enter a valid amount")
 
-        menu_button = tk.Button(button_frame, command=menu, text='Menu', relief='raised', borderwidth=3, width=50,
-                                height=5)
-        menu_button.grid(row=0, column=0, pady=5)
-
-        def exit():
-            controller.show_frame('F_fillestare')
-
-        exit_button = tk.Button(button_frame, text='Exit', command=exit, relief='raised', borderwidth=3, width=50,
-                                height=5)
-        exit_button.grid(row=1, column=0, pady=5)
-
-        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
-        bottom_frame.pack(fill='x', side='bottom')
-
+class BalancePage(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent, bg=controller.colors['dark'])
+        self.controller = controller
+        
+        # Header
+        header = tk.Frame(self, bg=controller.colors['primary'], height=100)
+        header.pack(fill='x')
+        header.pack_propagate(False)
+        
+        back_btn = tk.Button(header, text="← Back", font=controller.button_font,
+                           bg=controller.colors['primary'], fg='white',
+                           activebackground=controller.colors['primary'],
+                           activeforeground='white',
+                           command=lambda: controller.show_frame("MainMenu"))
+        back_btn.pack(side='left', padx=20)
+        
+        tk.Label(header, text="Account Balance", font=controller.heading_font,
+                bg=controller.colors['primary'], fg='white').pack(expand=True)
+        
+        # Balance Card
+        main_frame = tk.Frame(self, bg=controller.colors['dark'])
+        main_frame.pack(expand=True, fill='both', padx=30, pady=30)
+        
+        # Card-like display
+        card = tk.Frame(main_frame, bg=controller.colors['card'], highlightthickness=0)
+        card.pack(expand=True, fill='both', pady=20)
+        
+        # Account info
+        info_frame = tk.Frame(card, bg=controller.colors['card'])
+        info_frame.pack(expand=True)
+        
+        tk.Label(info_frame, text="ACCOUNT SUMMARY", font=("Arial", 14, 'bold'),
+                bg=controller.colors['card'], fg=controller.colors['text_light']).pack(pady=(30, 10))
+        
+        # Balance display
+        self.balance_label = tk.Label(info_frame, text=f"€{current_balance:.2f}",
+                                     font=("Arial", 48, 'bold'),
+                                     bg=controller.colors['card'], fg='white')
+        self.balance_label.pack(pady=20)
+        
+        tk.Label(info_frame, text="Available Balance", font=controller.normal_font,
+                bg=controller.colors['card'], fg=controller.colors['text_light']).pack()
+        
+        # Recent transactions (simulated)
+        trans_frame = tk.Frame(main_frame, bg='#2d3047')
+        trans_frame.pack(fill='x', pady=20)
+        
+        tk.Label(trans_frame, text="Recent Activity", font=controller.normal_font,
+                bg='#2d3047', fg='white').pack(anchor='w', padx=20, pady=10)
+        
+        transactions = [
+            ("ATM Withdrawal", "-€50.00", "Today"),
+            ("Deposit", "+€200.00", "Yesterday"),
+            ("ATM Withdrawal", "-€20.00", "2 days ago")
+        ]
+        
+        for desc, amount, date in transactions:
+            trans_item = tk.Frame(trans_frame, bg='#2d3047')
+            trans_item.pack(fill='x', padx=20, pady=5)
+            
+            tk.Label(trans_item, text=desc, font=("Arial", 10),
+                    bg='#2d3047', fg='#aaaaaa').pack(side='left')
+            tk.Label(trans_item, text=amount, font=("Arial", 10, 'bold'),
+                    bg='#2d3047', fg='white').pack(side='right')
+            tk.Label(trans_item, text=date, font=("Arial", 9),
+                    bg='#2d3047', fg='#777777').pack(side='right', padx=20)
+        
+        # Action buttons
+        btn_frame = tk.Frame(main_frame, bg=controller.colors['dark'])
+        btn_frame.pack(pady=20)
+        
+        tk.Button(btn_frame, text="PRINT STATEMENT", font=controller.button_font,
+                 bg=controller.colors['secondary'], fg='white',
+                 padx=20, pady=10).pack(side='left', padx=10)
+        
+        tk.Button(btn_frame, text="BACK TO MENU", font=controller.button_font,
+                 bg=controller.colors['accent'], fg='white',
+                 command=lambda: controller.show_frame("MainMenu"),
+                 padx=20, pady=10).pack(side='left', padx=10)
 
 if __name__ == "__main__":
-    app = SampleApp()
+    app = ATM()
     app.mainloop()
